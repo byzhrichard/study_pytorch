@@ -3,6 +3,7 @@ from torch import nn, optim
 from torchvision import datasets,transforms
 from torch.utils.data import DataLoader
 from ResNet import ResNet18
+
 def main():
     batch_size=32
     cifar_train = datasets.CIFAR10('../cifar', #访问当前目录的cifar文件夹
