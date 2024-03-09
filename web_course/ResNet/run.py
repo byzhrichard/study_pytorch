@@ -3,6 +3,10 @@ from torch import nn, optim
 from torchvision import datasets,transforms
 from torch.utils.data import DataLoader
 from ResNet import ResNet18
+from visdom import Visdom
+#
+viz = Visdom()
+viz.line([[0.,0.]],[0,],win='train_loss',opts=dict(title='train loss',legend=['loss','acc']))
 
 def main():
     batch_size=32
@@ -16,6 +20,7 @@ def main():
                              ]),
                              download=True) #如果没有，那么下载
     cifar_train = DataLoader(cifar_train, batch_size=batch_size, shuffle=True)
+    # print("awa", len(cifar_train) * 32)
     cifar_test = datasets.CIFAR10('../cifar',
                                    False,
                                    transform=transforms.Compose([
@@ -26,6 +31,7 @@ def main():
                                    ]),
                                    download=True)
     cifar_test = DataLoader(cifar_test, batch_size=batch_size, shuffle=True)
+    # print("awa", len(cifar_test) * 32)
 
     # x, label =iter(cifar_train).__next__()
     # print("x.shape:",x.shape,"label.shape:",label.shape)
@@ -35,14 +41,13 @@ def main():
     criteon = nn.CrossEntropyLoss().to(device)
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
     # print(device)
-    for epoch in range(20):
+    for epoch in range(30):
         model.train()#训练模式
         loss_avg = 0
         for batchidx, (x, label) in enumerate(cifar_train):
             # [b,3,32,32]
             # [b]
             x, label = x.to(device), label.to(device)
-
             logits = model(x)
             # logits    [b,10]
             # label     [b]
@@ -52,8 +57,8 @@ def main():
             loss.backward()
             optimizer.step()
         #完成了一个epoch
-        print(f"epoch:{epoch},loss:{loss_avg/len(cifar_train)}")
-
+        loss_avg = loss_avg/len(cifar_train)
+        print(f"epoch:{epoch},loss:{loss_avg}")
         model.eval()#测试模式
         with torch.no_grad():
             total_correct = 0
@@ -69,6 +74,6 @@ def main():
                 total_num += x.size(0)
             acc = total_correct / total_num
             print('acc:',acc)
-
+        viz.line([[loss_avg,acc]],[epoch+1],win='train_loss',update='append')
 if __name__ == '__main__':
     main()
