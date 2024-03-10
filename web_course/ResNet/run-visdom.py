@@ -3,6 +3,10 @@ from torch import nn, optim
 from torchvision import datasets,transforms
 from torch.utils.data import DataLoader
 from ResNet import ResNet18
+from visdom import Visdom
+#
+viz = Visdom()
+viz.line([[0.,0.]],[0,],win='train_loss',opts=dict(title='train loss',legend=['loss','acc']))
 
 def main():
     batch_size=32
@@ -70,5 +74,6 @@ def main():
                 total_num += x.size(0)
             acc = total_correct / total_num
             print('acc:',acc)
+        viz.line([[loss_avg,acc]],[epoch+1],win='train_loss',update='append')
 if __name__ == '__main__':
     main()
