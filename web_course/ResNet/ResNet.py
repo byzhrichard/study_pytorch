@@ -6,10 +6,16 @@ class ResBlk(nn.Module):
     def __init__(self,ch_in,ch_out,stride=1):
         super().__init__()
 
-        self.conv1 = nn.Conv2d(ch_in,ch_out,kernel_size=3,stride=stride,padding=1)  #利用stride来减少参数量，长，宽
-        self.bn1 = nn.BatchNorm2d(ch_out)
-        self.conv2 = nn.Conv2d(ch_out,ch_out,kernel_size=3,stride=1,padding=1)#conv2是不会改变形状的
-        self.bn2 = nn.BatchNorm2d(ch_out)
+        self.conv_stack1 = nn.Sequential(
+            nn.Conv2d(ch_in, ch_out, kernel_size=3, stride=stride, padding=1),  # 利用stride来减少参数量，长，宽
+            nn.BatchNorm2d(ch_out),
+            nn.ReLU(inplace=True)
+        )
+        self.conv_stack2 = nn.Sequential(
+            nn.Conv2d(ch_out,ch_out,kernel_size=3,stride=1,padding=1),  #conv2是不会改变形状的
+            nn.BatchNorm2d(ch_out),
+            nn.ReLU(inplace=True)
+        )
 
         # self.extra = nn.Sequential()
         # if ch_in != ch_out:
@@ -28,33 +34,17 @@ class ResBlk(nn.Module):
         :param x:[b,c,h,w]
         :return:
         '''
-        # print('x.shape:',x.shape)
-
-        out = self.conv1(x)
-        # print('out.shape:',out.shape)
-
-        out = self.bn1(out)
-        out = F.relu(out,inplace=True)
-        # out = F.relu(self.bn1(self.conv1(x)),inplace=True)
-        out = self.conv2(out)
-        # print('out.shape:',out.shape)
-        out = self.bn2(out)
-        #out:   [b,ch_out,h,w]
-        #x:     [b,ch_in,h,w]
-
+        out = self.conv_stack1(x)
+        out = self.conv_stack2(out)
         # short cut
-        # print('result-x.shape:',x.shape)
-        # print('result-x.extra.shape:',self.extra(x).shape)
-        # print('result-out.shape:',out.shape)
         out = self.extra(x) + out
-        # print('-----')
         return out
 
 class ResNet18(nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.conv1_stack = nn.Sequential(
+        self.conv_stack1 = nn.Sequential(
             nn.Conv2d(3,64,kernel_size=3,stride=3,padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True)
@@ -67,11 +57,12 @@ class ResNet18(nn.Module):
         self.blk3 = ResBlk(256, 512,stride=2)
         # [b,512,h,w] -> [b,512,h,w]
         self.blk4 = ResBlk(512, 512,stride=2)   #?????
+
         self.outlayer = nn.Linear(512*1*1,10)
     def forward(self, x):
         # print('in-x.shape:',x.shape)
 
-        x = self.conv1_stack(x)
+        x = self.conv_stack1(x)
         #[b,64,h,w] -> [b,512,h,w]
         x = self.blk1(x)
         x = self.blk2(x)
@@ -88,8 +79,6 @@ class ResNet18(nn.Module):
         return x
 
 def main():
-
-
     x = torch.randn(2,3,112,112)
     model = ResNet18()
     out = model(x)
