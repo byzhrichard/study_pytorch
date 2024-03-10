@@ -35,8 +35,8 @@ def main():
     # print("x.shape:",x.shape,"label.shape:",label.shape)
 
     device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
-    model = ResNet18().to(device)
-    # model = ResNet188().to(device)
+    # model = ResNet18().to(device)
+    model = ResNet188().to(device)
     criteon = nn.CrossEntropyLoss().to(device)
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
     # print(device)
