@@ -89,7 +89,8 @@ class ResNet(nn.Module):
                           channel,
                           kernel_size=1,
                           stride=stride,
-                          bias=False), nn.BatchNorm2d(channel))
+                          bias=False),
+                nn.BatchNorm2d(channel))
         bk1 = block(self.in_channel,
                     channel,
                     downsample= downsample,
@@ -101,15 +102,25 @@ class ResNet(nn.Module):
 
     def forward(self, x):
         x = self.conv1(x)
+        # print(x.shape)
         x = self.bn1(x)
+        # print(x.shape)
         x = self.relu(x)
+        # print(x.shape)
         x = self.maxpool(x)
+        # print(x.shape)
+
 
         x = self.layer1(x)
+        # print(x.shape)
         x = self.layer2(x)
+        # print(x.shape)
         x = self.layer3(x)
+        # print(x.shape)
         x = self.layer4(x)
+        # print(x.shape)
         x = self.avgpool(x)
+        # print(x.shape)
         x = torch.flatten(x, 1)
         x = self.fc(x)
 
@@ -119,4 +130,8 @@ class ResNet(nn.Module):
 
 if __name__ == '__main__':
     net = ResNet()
-    print(net)
+    # print(net)
+    # x = torch.randn(2,3,32,32)
+    x = torch.randn(100, 3, 32, 32)
+    model = ResNet()
+    out = model(x)

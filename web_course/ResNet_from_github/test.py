@@ -3,7 +3,7 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 from torch import nn, optim
 import numpy as np
-from ResNet import ResNet
+from ResNet_1 import ResNet
 import matplotlib.pyplot as plt
 import torchvision.models as models
 

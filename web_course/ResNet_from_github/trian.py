@@ -3,7 +3,7 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 from torch import nn, optim
 import numpy as np
-from ResNet import ResNet
+from ResNet_1 import ResNet
 import matplotlib.pyplot as plt
 
 # 训练设备选择
@@ -26,7 +26,6 @@ def train():
                              batch_size=batch_size,
                              shuffle=True,
                              num_workers=0)
-
     # 测试集
     cifar_test = datasets.CIFAR10(
         root='../cifar',
@@ -57,7 +56,7 @@ def train():
         model.train()  # 训练模式
         loss_sum = []
         for batchidx, (data, label) in enumerate(cifar_train):
-
+            # print(data.shape)
             data = data.to(device)
             label = label.to(device)
             predict = model(data)
