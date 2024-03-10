@@ -9,35 +9,30 @@ class ResBlk(nn.Module):
         self.conv_stack1 = nn.Sequential(
             nn.Conv2d(ch_in, ch_out, kernel_size=3, stride=stride, padding=1),  # 利用stride来减少参数量，长，宽
             nn.BatchNorm2d(ch_out),
-            nn.ReLU(inplace=True)
         )
         self.conv_stack2 = nn.Sequential(
             nn.Conv2d(ch_out,ch_out,kernel_size=3,stride=1,padding=1),  #conv2是不会改变形状的
             nn.BatchNorm2d(ch_out),
-            nn.ReLU(inplace=True)
         )
 
-        # self.extra = nn.Sequential()
-        # if ch_in != ch_out:
-        #     # [b,ch_in,h,w] -> [b,ch_out,h,w]
-        #     self.extra = nn.Sequential(
-        #         nn.Conv2d(ch_in,ch_out,kernel_size=1,stride=stride),
-        #         nn.BatchNorm2d(ch_out)
-        #     )
-
-        self.extra = nn.Sequential(
-            nn.Conv2d(ch_in, ch_out, kernel_size=1, stride=stride),
-            nn.BatchNorm2d(ch_out)
-        )
+        self.extra = nn.Sequential()
+        if ch_in != ch_out or stride != 1:
+            # [b,ch_in,h,w] -> [b,ch_out,h,w]
+            self.extra = nn.Sequential(
+                nn.Conv2d(ch_in,ch_out,kernel_size=1,stride=stride),
+                nn.BatchNorm2d(ch_out)
+            )
     def forward(self, x):
         '''
         :param x:[b,c,h,w]
         :return:
         '''
         out = self.conv_stack1(x)
+        out = F.relu(out,inplace=True)
         out = self.conv_stack2(out)
         # short cut
         out = self.extra(x) + out
+        out = F.relu(out,inplace=True)
         return out
 
 class ResNet18(nn.Module):
@@ -50,13 +45,17 @@ class ResNet18(nn.Module):
             nn.ReLU(inplace=True)
         )
         # [b,64,h,w] -> [b,128,h,w]
-        self.blk1 = ResBlk(64,128,stride=2)
+        self.blk1 = ResBlk(64,64,stride=1)
+        self.blk2 = ResBlk(64,64,stride=1)
         # [b,128,h,w] -> [b,256,h,w]
-        self.blk2 = ResBlk(128, 256,stride=2)
+        self.blk3 = ResBlk(64, 128,stride=2)
+        self.blk4 = ResBlk(128, 128,stride=1)
         # [b,256,h,w] -> [b,512,h,w]
-        self.blk3 = ResBlk(256, 512,stride=2)
+        self.blk5 = ResBlk(128, 256,stride=2)
+        self.blk6 = ResBlk(256, 256,stride=1)
         # [b,512,h,w] -> [b,512,h,w]
-        self.blk4 = ResBlk(512, 512,stride=2)   #?????
+        self.blk7 = ResBlk(256, 512,stride=2)
+        self.blk8 = ResBlk(512, 512,stride=1)
 
         self.outlayer = nn.Linear(512*1*1,10)
     def forward(self, x):
@@ -68,6 +67,10 @@ class ResNet18(nn.Module):
         x = self.blk2(x)
         x = self.blk3(x)
         x = self.blk4(x)
+        x = self.blk5(x)
+        x = self.blk6(x)
+        x = self.blk7(x)
+        x = self.blk8(x)
                 # print("after conv:",x.shape)
         # [b,512,h,w] -> [b,512,1,1]
         x = F.adaptive_avg_pool2d(x, (1, 1))
