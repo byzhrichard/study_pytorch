@@ -52,7 +52,7 @@ def train():
 
     # 训练网络
     for epoch in range(20):
-        f = open(path , "a+")
+        f = open(path , "a+")   #追加，可读可写
         model.train()  # 训练模式
         loss_sum = []
         for batchidx, (data, label) in enumerate(cifar_train):

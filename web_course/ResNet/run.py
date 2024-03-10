@@ -39,6 +39,7 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
     # print(device)
     for epoch in range(20):
+        f = open("train_out.txt", "a+")  # 追加，可读可写
         model.train()#训练模式
         loss_sum = []
         for batchidx, (x, label) in enumerate(cifar_train):
@@ -55,6 +56,7 @@ def main():
             optimizer.step()
         #完成了一个epoch
         print(f"epoch:{epoch},loss:{np.mean(loss_sum)}")
+        print(f"epoch:{epoch},loss:{np.mean(loss_sum)}", file=f)
         model.eval()#测试模式
         with torch.no_grad():
             total_correct = 0
@@ -69,6 +71,8 @@ def main():
                 total_correct += torch.eq(pred, label).float().sum().item()
                 total_num += x.size(0)
             acc = total_correct / total_num
-            print('acc:',acc)
+            print(f"epoch:{epoch},acc:{acc}")
+            print(f"epoch:{epoch},acc:{acc}", file=f)
+            f.close()
 if __name__ == '__main__':
     main()

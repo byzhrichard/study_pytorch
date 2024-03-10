@@ -54,9 +54,10 @@ class ResNet18(nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.conv1 = nn.Sequential(
+        self.conv1_stack = nn.Sequential(
             nn.Conv2d(3,64,kernel_size=3,stride=3,padding=1),
             nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True)
         )
         # [b,64,h,w] -> [b,128,h,w]
         self.blk1 = ResBlk(64,128,stride=2)
@@ -70,8 +71,7 @@ class ResNet18(nn.Module):
     def forward(self, x):
         # print('in-x.shape:',x.shape)
 
-        x = F.relu(self.conv1(x))
-
+        x = self.conv1_stack(x)
         #[b,64,h,w] -> [b,512,h,w]
         x = self.blk1(x)
         x = self.blk2(x)

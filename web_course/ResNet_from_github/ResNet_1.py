@@ -9,7 +9,7 @@ class BasicBlock(nn.Module):
         self.conv1 = nn.Conv2d(in_channels=in_channel,
                                out_channels=out_channel,
                                kernel_size=3,
-                               stride=stride,
+                               stride=stride,   #1：不改变形状   2：除以2
                                padding=1,
                                bias=False)
         # 批归一化
@@ -18,7 +18,7 @@ class BasicBlock(nn.Module):
         # inplace对从上层网络nn.Conv2d中传递下来的tensor直接进行修改，这样能够节省运算内存
         self.relu = nn.ReLU(inplace=True)
 
-        self.conv2 = nn.Conv2d(in_channels=out_channel,
+        self.conv2 = nn.Conv2d(in_channels=out_channel, #不改变形状
                                out_channels=out_channel,
                                kernel_size=3,
                                stride=1,
@@ -47,7 +47,7 @@ class BasicBlock(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, block=BasicBlock, num_classes=10):
+    def __init__(self, num_classes=10):
         super(ResNet, self).__init__()
         # 控制padding stride 让输入图片大小减半
         # 224 to 112
@@ -55,18 +55,18 @@ class ResNet(nn.Module):
         self.conv1 = nn.Conv2d(in_channels=3,
                                out_channels=64,
                                kernel_size=7,
-                               stride=2,
+                               stride=2,    #除以2
                                padding=3,
                                bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         #112 to 56
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1) #除以2
         #maxpool已经减半了
-        self.layer1 = self.make_layer(block, 64)
-        self.layer2 = self.make_layer(block, 128, stride=2)
-        self.layer3 = self.make_layer(block, 256, stride=2)
-        self.layer4 = self.make_layer(block, 512, stride=2)
+        self.layer1 = self.make_layer(64)
+        self.layer2 = self.make_layer(128, stride=2)
+        self.layer3 = self.make_layer(256, stride=2)
+        self.layer4 = self.make_layer(512, stride=2)
 
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512, num_classes)
@@ -80,7 +80,7 @@ class ResNet(nn.Module):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
 
-    def make_layer(self, block, channel, stride=1):
+    def make_layer(self, channel, stride=1):
         downsample = None
         #不是第一层时要加入下采样项
         if stride != 1:
@@ -88,19 +88,20 @@ class ResNet(nn.Module):
                 nn.Conv2d(self.in_channel,
                           channel,
                           kernel_size=1,
-                          stride=stride,
+                          stride=stride,    #除以2
                           bias=False),
                 nn.BatchNorm2d(channel))
-        bk1 = block(self.in_channel,
+        bk1 = BasicBlock(self.in_channel,
                     channel,
-                    downsample= downsample,
-                    stride=stride)
+                    downsample= downsample, #第一次为None，
+                    stride=stride)  #第一次为1，不改变形状。之后为2，除以2
+        bk2 = BasicBlock(channel, channel)
+        bk = nn.Sequential(bk1, bk2)
         self.in_channel = channel
-        bk2 = block(self.in_channel, channel)
-        bk = nn.Sequential(bk1,bk2)
         return bk
 
     def forward(self, x):
+        # print(x.shape)
         x = self.conv1(x)
         # print(x.shape)
         x = self.bn1(x)
@@ -108,17 +109,17 @@ class ResNet(nn.Module):
         x = self.relu(x)
         # print(x.shape)
         x = self.maxpool(x)
-        # print(x.shape)
-
+        print(x.shape)
 
         x = self.layer1(x)
-        # print(x.shape)
+        print(x.shape)
         x = self.layer2(x)
-        # print(x.shape)
+        print(x.shape)
         x = self.layer3(x)
         # print(x.shape)
         x = self.layer4(x)
         # print(x.shape)
+
         x = self.avgpool(x)
         # print(x.shape)
         x = torch.flatten(x, 1)
@@ -132,6 +133,6 @@ if __name__ == '__main__':
     net = ResNet()
     # print(net)
     # x = torch.randn(2,3,32,32)
-    x = torch.randn(100, 3, 32, 32)
+    x = torch.randn(100, 3, 112, 112)
     model = ResNet()
     out = model(x)
