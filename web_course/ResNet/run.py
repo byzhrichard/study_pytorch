@@ -4,13 +4,14 @@ from torch import nn, optim
 from torchvision import datasets,transforms
 from torch.utils.data import DataLoader
 from ResNet import ResNet18
+from net import ResNet188
 
 def main():
     batch_size=100
     cifar_train = datasets.CIFAR10('../cifar', #访问当前目录的cifar文件夹
                              True,
                              transform=transforms.Compose([
-                                 transforms.Resize((112,112)),
+                                 transforms.Resize((32,32)),
                                  transforms.ToTensor(),
                                  transforms.Normalize(mean=[0.485,0.456,0.406], #image-net的初始化，更好的性能
                                                       std=[0.229,0.224,0.225])
@@ -21,7 +22,7 @@ def main():
     cifar_test = datasets.CIFAR10('../cifar',
                                    False,
                                    transform=transforms.Compose([
-                                       transforms.Resize((112, 112)),
+                                       transforms.Resize((32, 32)),
                                        transforms.ToTensor(),
                                        transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                                             std=[0.229, 0.224, 0.225])
@@ -35,6 +36,7 @@ def main():
 
     device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
     model = ResNet18().to(device)
+    # model = ResNet188().to(device)
     criteon = nn.CrossEntropyLoss().to(device)
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
     # print(device)
@@ -43,6 +45,7 @@ def main():
         model.train()#训练模式
         loss_sum = []
         for batchidx, (x, label) in enumerate(cifar_train):
+            if batchidx%50==0:print(batchidx)
             # [b,3,32,32]
             # [b]
             x, label = x.to(device), label.to(device)

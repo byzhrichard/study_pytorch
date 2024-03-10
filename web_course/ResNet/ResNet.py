@@ -7,11 +7,11 @@ class ResBlk(nn.Module):
         super().__init__()
 
         self.conv_stack1 = nn.Sequential(
-            nn.Conv2d(ch_in, ch_out, kernel_size=3, stride=stride, padding=1),  # 利用stride来减少参数量，长，宽
+            nn.Conv2d(ch_in, ch_out, kernel_size=3, stride=stride, padding=1, bias=False),  # 利用stride来减少参数量，长，宽
             nn.BatchNorm2d(ch_out),
         )
         self.conv_stack2 = nn.Sequential(
-            nn.Conv2d(ch_out,ch_out,kernel_size=3,stride=1,padding=1),  #conv2是不会改变形状的
+            nn.Conv2d(ch_out,ch_out,kernel_size=3,stride=1,padding=1, bias=False),  #conv2是不会改变形状的
             nn.BatchNorm2d(ch_out),
         )
 
@@ -19,7 +19,7 @@ class ResBlk(nn.Module):
         if ch_in != ch_out or stride != 1:
             # [b,ch_in,h,w] -> [b,ch_out,h,w]
             self.extra = nn.Sequential(
-                nn.Conv2d(ch_in,ch_out,kernel_size=1,stride=stride),
+                nn.Conv2d(ch_in,ch_out,kernel_size=1,stride=stride, bias=False),
                 nn.BatchNorm2d(ch_out)
             )
     def forward(self, x):
@@ -40,7 +40,7 @@ class ResNet18(nn.Module):
         super().__init__()
 
         self.conv_stack1 = nn.Sequential(
-            nn.Conv2d(3,64,kernel_size=3,stride=3,padding=1),
+            nn.Conv2d(3,64,kernel_size=3,stride=1,padding=1, bias=False),#3
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True)
         )
@@ -74,10 +74,13 @@ class ResNet18(nn.Module):
                 # print("after conv:",x.shape)
         # [b,512,h,w] -> [b,512,1,1]
         x = F.adaptive_avg_pool2d(x, (1, 1))
+        # x = F.avg_pool2d(x, 4)
+
                 # print("after pool:", x.shape)
         # x = x.view(x.size(0),-1)    #????
         x = torch.flatten(x, 1)
         x = self.outlayer(x)
+        # print(x.shape)
 
         return x
 
