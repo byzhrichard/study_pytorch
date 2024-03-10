@@ -23,7 +23,7 @@ class ResBlk(nn.Module):
         :param x:[b,c,h,w]
         :return:
         '''
-        out = F.relu(self.bn1(self.conv1(x)))
+        out = F.relu(self.bn1(self.conv1(x)),inplace=True)
         out = self.bn2(self.conv2(out))
         #out:   [b,ch_out,h,w]
         #x:     [b,ch_in,h,w]
@@ -39,7 +39,7 @@ class ResNet18(nn.Module):
 
         self.conv1 = nn.Sequential(
             nn.Conv2d(3,64,kernel_size=3,stride=3,padding=1),
-            nn.BatchNorm2d(64)
+            nn.BatchNorm2d(64),
         )
         # [b,64,h,w] -> [b,128,h,w]
         self.blk1 = ResBlk(64,128,stride=2)

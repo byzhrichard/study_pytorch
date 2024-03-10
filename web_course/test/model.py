@@ -1,86 +1,69 @@
-import torch.nn as nn
-from torch.nn import functional as F
+import torch
+from torch import nn, optim
+from torchvision import datasets,transforms
+from torch.utils.data import DataLoader
+from net import ResNet18
+batch_sz = 32
+# 导入训练集数据
+train_data = DataLoader(
+    datasets.CIFAR10(root='../cifar', train=True, transform=transforms.Compose([
+        transforms.Resize((32, 32)),      # 重新设置图片大小
+        transforms.ToTensor(),      # 将图片转化为tensor
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                             std=[0.229, 0.224, 0.225])         # 进行归一化
+    ]), download=True), shuffle=True, batch_size=batch_sz
+)
 
+# 导入测试集数据
+train_test = DataLoader(
+    datasets.CIFAR10(root='../cifar', train=False, transform=transforms.Compose([
+        transforms.Resize((32, 32)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                             std=[0.229, 0.224, 0.225])
+    ]), download=True), shuffle=True, batch_size=batch_sz
+)
+# 定义损失函数和优化方式
+device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
+criteon = nn.CrossEntropyLoss().to(device)
+model = ResNet18().to(device)
+learn_rate = 1e-3
+optimizer = torch.optim.Adam(model.parameters(), lr=learn_rate)
+# 训练模型
+for epoch in range(10):
+    model.train()
+    for batch_idx, (x, label) in enumerate(train_data):
+        x = x.to(device)
+        label = label.to(device)
 
-class ResidualBlock(nn.Module):  # 搭建 残差结构
-    def __init__(self, inchannel, outchannel, stride=1, shortcut=None):
-        super(ResidualBlock, self).__init__()
-        self.left = nn.Sequential(
-            # stride 不是1，因为有的残差块第一层 的stride = 2；对应残差块的虚线实线
-            nn.Conv2d(inchannel, outchannel, kernel_size=3, stride=stride, padding=1, bias=False),
-            nn.BatchNorm2d(outchannel),
-            nn.ReLU(inplace=True),
-            # 第二个卷积核的stride = 1
-            nn.Conv2d(outchannel, outchannel, kernel_size=3, stride=1, padding=1, bias=False),  # 输入和输出的特征图size一样
-            nn.BatchNorm2d(outchannel),
-        )
-        self.right = shortcut  # 捷径块
+        logits = model(x)       # 经过模型得到的数据
 
-    def forward(self, x):
-        out = self.left(x)
-        # 实线，特征图的输入和输出size一样；虚线，shortcut部分要经过1*1卷积核改变特征图size
-        residual = x if self.right is None else self.right(x)
-        out += residual  # 加完之后在 ReLU
-        out = F.relu(out)
-        return out
+        loss = criteon(logits, label)
+        # print('logits:', logits[0])
+        # print('label:', label[0])
+        # 反向传播
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        if batch_idx == len(train_data) - 1:
+            print(epoch, 'loss:', loss.item())
 
+    # 进行测试
+    model.eval()
+    with torch.no_grad():
+        total_correct = 0
+        total_num = 0
+        for x, label in train_test:
+            x = x.to(device)
+            label = label.to(device)
 
-class ResNet(nn.Module):  # 搭建ResNet 网络
-    def __init__(self, num_classes=10):
-        super(ResNet, self).__init__()
-        self.pre = nn.Sequential(
-            # 输入：batch * 3 * 224 * 224
-            # 输出特征图size = (224 - 7 + 2*3) / 2 + 1 = 112 +0.5 = 112 向下取整
-            nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False),  # 输出 [batch,64,112,112]
-            nn.BatchNorm2d(64),
-            nn.ReLU(inplace=True),
-            # 输出特征图size = (112 - 3 + 2*1) / 2 + 1 = 56 +0.5 = 56 向下取整
-            nn.MaxPool2d(kernel_size=3, stride=2, padding=1)  # 输出 [batch,64,56,56]
-        )
+            logits = model(x)
 
-        self.layer1 = self._make_layer(64, 3, stride=1)  # conv2_x 有三个残差块
-        self.layer2 = self._make_layer(128, 4, stride=2)  # conv3_x 有四个残差块
-        self.layer3 = self._make_layer(256, 6, stride=2)  # conv4_x 有六个残差块
-        self.layer4 = self._make_layer(512, 3, stride=2)  # conv5_x 有三个残差块
+            pred = logits.argmax(dim=1)
 
-        self.fc = nn.Linear(512, num_classes)  # 分类层
+            correct = torch.eq(pred, label).float().sum().item()
+            total_correct += correct
+            total_num += x.size(0)
 
-    def _make_layer(self, channel, block_num, stride=1):  # 构建layer，每个层包含3 4 6 3 个残差块block_num
-        shortcut = None
-        layers = []  # 网络层
-
-        if stride != 1:  # conv3/4/5_x 的第一层 stride 都是2，并且shortcut 需要特殊操作
-            # 定义shortcut 捷径，都是1*1 的kernel ，需要保证和left最后相加的shape一样
-            shortcut = nn.Sequential(
-                nn.Conv2d(int(channel / 2), channel, kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(channel)
-            )
-            layers.append(ResidualBlock(int(channel / 2), channel, stride, shortcut))
-        else:
-            layers.append(ResidualBlock(channel, channel, stride, shortcut))
-
-        for i in range(1, block_num):  # 残差块后面几层的卷积是一样的
-            layers.append(ResidualBlock(channel, channel))
-        return nn.Sequential(*layers)
-
-    def forward(self, x):
-        x = self.pre(x)  # batch*64*56*56
-        x = self.layer1(x)  # batch*64*56*56
-        x = self.layer2(x)  # batch*128*28*28
-        x = self.layer3(x)  # batch*256*14*14
-        x = self.layer4(x)  # batch*512*7*7
-        x = F.avg_pool2d(x, 7)  # batch*512*1*1
-        x = x.view(x.size(0), -1)  # x.size(0)是batch ，保持batch，其余的压成1维
-        x = self.fc(x)  # batch*10(分类的个数)
-        return x
-
-
-model = ResNet()
-# import torch
-# input = torch.randn((10,3,224,224))
-# model(input)
-
-
-# 计算网络参数个数
-print("Total number of paramerters in networks is {}  ".format(sum(x.numel() for x in model.parameters())))
-
+        acc = total_correct / total_num
+        print(epoch, 'test acc:', acc)
