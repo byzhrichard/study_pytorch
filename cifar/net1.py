@@ -1,4 +1,4 @@
-#原始
+#p44
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -41,7 +41,7 @@ class ResNet18(nn.Module):
         super().__init__()
 
         self.conv_stack1 = nn.Sequential(
-            nn.Conv2d(3,64,kernel_size=3,stride=1,padding=1, bias=False),#3
+            nn.Conv2d(3,64,kernel_size=3,stride=3,padding=1, bias=False),#3
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True)
         )
