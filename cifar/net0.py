@@ -72,25 +72,19 @@ class ResNet18(nn.Module):
         x = self.blk6(x)
         x = self.blk7(x)
         x = self.blk8(x)
-                # print("after conv:",x.shape)
-        # [b,512,h,w] -> [b,512,1,1]
         # x = F.adaptive_avg_pool2d(x, (1, 1))
-        x = F.avg_pool2d(x, 4)
+        x = F.avg_pool2d(x, 4)#
 
-        # x = F.avg_pool2d(x, 4)
-
-                # print("after pool:", x.shape)
-        x = x.view(x.size(0),-1)    #????
-        # x = torch.flatten(x, 1)
+        x = x.view(x.size(0),-1)
         x = self.outlayer(x)
-        # print(x.shape)
 
         return x
 
 def main():
-    x = torch.randn(2,3,112,112)
+    x = torch.randn(2,3,32,32)
     model = ResNet18()
     out = model(x)
+    print(out.shape)
 if __name__ == '__main__':
     main()
 

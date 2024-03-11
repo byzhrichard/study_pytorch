@@ -10,14 +10,9 @@ import os
 # 定义是否使用GPU
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# 参数设置,使得我们能够手动输入命令行参数，就是让风格变得和Linux命令行差不多
-parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
-parser.add_argument('--outf', default='./model/', help='folder to output images and model checkpoints') #输出结果保存路径
-args = parser.parse_args()
 
 # 超参数设置
 EPOCH = 135   #遍历数据集次数
-pre_epoch = 0  # 定义已经遍历数据集的次数
 BATCH_SIZE = 128      #批处理尺寸(batch_size)
 LR = 0.01        #学习率
 
@@ -39,8 +34,6 @@ trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE, shuff
 
 testset = torchvision.datasets.CIFAR10(root='../cifar', train=False, download=True, transform=transform_test)
 testloader = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False, num_workers=2)
-# Cifar-10的标签
-classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
 # 模型定义-ResNet
 net = ResNet18().to(device)
@@ -51,28 +44,25 @@ optimizer = optim.SGD(net.parameters(), lr=LR, momentum=0.9, weight_decay=5e-4) 
 
 # 训练
 if __name__ == "__main__":
-    if not os.path.exists(args.outf):
-        os.makedirs(args.outf)
+    os.makedirs("model",exist_ok=True)
     best_acc = 85  #2 初始化best test accuracy
     print("Start Training, Resnet-18!")  # 定义遍历数据集的次数
     with open("acc.txt", "w") as f:
         with open("log.txt", "w")as f2:
-            for epoch in range(pre_epoch, EPOCH):
+            for epoch in range(EPOCH):
                 print('\nEpoch: %d' % (epoch + 1))
                 net.train()
                 sum_loss = 0.0
                 correct = 0.0
                 total = 0.0
-                for i, data in enumerate(trainloader, 0):
+                for batchidx, data in enumerate(trainloader):
                     # 准备数据
                     length = len(trainloader)
                     inputs, labels = data
                     inputs, labels = inputs.to(device), labels.to(device)
-                    print(labels,labels.shape)
 
                     # forward + backward
                     outputs = net(inputs)
-                    print(outputs,outputs.shape)
                     loss = criterion(outputs, labels)
                     optimizer.zero_grad()
                     loss.backward()
@@ -84,9 +74,9 @@ if __name__ == "__main__":
                     total += labels.size(0)
                     correct += predicted.eq(labels.data).cpu().sum()
                     print('[epoch:%d, iter:%d] Loss: %.03f | Acc: %.3f%% '
-                          % (epoch + 1, (i + 1 + epoch * length), sum_loss / (i + 1), 100. * correct / total))
+                          % (epoch + 1, (batchidx + 1 + epoch * length), sum_loss / (batchidx + 1), 100. * correct / total))
                     f2.write('%03d  %05d |Loss: %.03f | Acc: %.3f%% '
-                          % (epoch + 1, (i + 1 + epoch * length), sum_loss / (i + 1), 100. * correct / total))
+                             % (epoch + 1, (batchidx + 1 + epoch * length), sum_loss / (batchidx + 1), 100. * correct / total))
                     f2.write('\n')
                     f2.flush()
 
@@ -108,7 +98,7 @@ if __name__ == "__main__":
                     acc = 100. * correct / total
                     # 将每次测试结果实时写入acc.txt文件中
                     print('Saving model......')
-                    torch.save(net.state_dict(), '%s/net_%03d.pth' % (args.outf, epoch + 1))
+                    torch.save(net.state_dict(), '%s/net_%03d.pth' % ("model", epoch + 1))
                     f.write("EPOCH=%03d,Accuracy= %.3f%%" % (epoch + 1, acc))
                     f.write('\n')
                     f.flush()

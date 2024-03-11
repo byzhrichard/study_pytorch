@@ -65,13 +65,6 @@ class ResNet(nn.Module):
         out = F.avg_pool2d(out, 4)
         out = out.view(out.size(0), -1)
         out = self.fc(out)
-        print(out.shape)
         return out
-def ResNet188():
+def ResNet18():
     return ResNet(ResidualBlock)
-def main():
-    x = torch.randn(2,3,32,32)
-    model = ResNet188()
-    out = model(x)
-if __name__ == '__main__':
-    main()
