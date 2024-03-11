@@ -4,7 +4,7 @@ import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
 import argparse
-from net import ResNet18
+from ResNet import ResNet18
 import os
 
 # 定义是否使用GPU
@@ -68,11 +68,11 @@ if __name__ == "__main__":
                     length = len(trainloader)
                     inputs, labels = data
                     inputs, labels = inputs.to(device), labels.to(device)
+                    optimizer.zero_grad()
 
                     # forward + backward
                     outputs = net(inputs)
                     loss = criterion(outputs, labels)
-                    optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
 

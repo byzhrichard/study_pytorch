@@ -38,7 +38,10 @@ def main():
     # model = ResNet18().to(device)
     model = ResNet188().to(device)
     criteon = nn.CrossEntropyLoss().to(device)
-    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    # optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    # optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=5e-4)
+    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9,
+                          weight_decay=5e-4)  # 优化方式为mini-batch momentum-SGD，并采用L2正则化（权重衰减）
     # print(device)
     for epoch in range(20):
         f = open("train_out.txt", "a+")  # 追加，可读可写
