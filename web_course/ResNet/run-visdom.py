@@ -10,7 +10,7 @@ viz.line([[0.,0.]],[0,],win='train_loss',opts=dict(title='train loss',legend=['l
 
 def main():
     batch_size=32
-    cifar_train = datasets.CIFAR10('../cifar', #访问当前目录的cifar文件夹
+    cifar_train = datasets.CIFAR10('../cifar1', #访问当前目录的cifar文件夹
                              True,
                              transform=transforms.Compose([
                                  transforms.Resize((32,32)),
@@ -21,7 +21,7 @@ def main():
                              download=True) #如果没有，那么下载
     cifar_train = DataLoader(cifar_train, batch_size=batch_size, shuffle=True)
     # print("awa", len(cifar_train) * 32)
-    cifar_test = datasets.CIFAR10('../cifar',
+    cifar_test = datasets.CIFAR10('../cifar1',
                                    False,
                                    transform=transforms.Compose([
                                        transforms.Resize((32, 32)),

@@ -14,7 +14,7 @@ def train():
     batch_size = 100
     # 训练集
     cifar_train = datasets.CIFAR10(
-        root='../cifar',
+        root='../cifar1',
         train=True,
         transform=transforms.Compose([
             transforms.Resize((112,112)),
@@ -28,7 +28,7 @@ def train():
                              num_workers=0)
     # 测试集
     cifar_test = datasets.CIFAR10(
-        root='../cifar',
+        root='../cifar1',
         train=False,
         transform=transforms.Compose([
             transforms.Resize((112,112)),

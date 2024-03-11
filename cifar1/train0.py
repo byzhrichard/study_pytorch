@@ -75,6 +75,7 @@ if __name__ == '__main__':
                 label = label.to(DEVICE)  # [b]
                 y = model(x)  # [b,10]
 
+                pred = y.argmax(dim=1)  # [b]
                 total_num += x.size(0)  # batch为100
                 correct_num += torch.eq(pred, label).sum().item()
         acc = 100. * correct_num/total_num
@@ -82,6 +83,6 @@ if __name__ == '__main__':
         f2.write('[epoch:%d] test的acc：%.3f%%\n' % (epoch, acc))
         f2.flush()
         print('保存模型......')
-        torch.save(net.state_dict(), 'model/net_%03d.pth' % (epoch + 1))
+        torch.save(model.state_dict(), 'model/net_%03d.pth' % (epoch + 1))
 
 

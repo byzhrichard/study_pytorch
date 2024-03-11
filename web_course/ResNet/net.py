@@ -1,4 +1,4 @@
-'''ResNet-18 Image classfication for cifar-10 with PyTorch
+'''ResNet-18 Image classfication for cifar1-10 with PyTorch
 
 Author 'Sun-qian'.
 

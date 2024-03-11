@@ -8,7 +8,7 @@ from net import ResNet188
 
 def main():
     batch_size=100
-    cifar_train = datasets.CIFAR10('../cifar', #访问当前目录的cifar文件夹
+    cifar_train = datasets.CIFAR10('../cifar1', #访问当前目录的cifar文件夹
                              True,
                              transform=transforms.Compose([
         transforms.RandomCrop(32, padding=4),  # 先四周填充0，在吧图像随机裁剪成32*32
@@ -19,7 +19,7 @@ def main():
                              download=True) #如果没有，那么下载
     cifar_train = DataLoader(cifar_train, batch_size=batch_size, shuffle=True)
     # print("awa", len(cifar_train) * batch_size)
-    cifar_test = datasets.CIFAR10('../cifar',
+    cifar_test = datasets.CIFAR10('../cifar1',
                                    False,
                                    transform=transforms.Compose([
                                        transforms.Resize((32, 32)),
