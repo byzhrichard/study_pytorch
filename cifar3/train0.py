@@ -1,3 +1,4 @@
+#数据初始化
 import numpy as np
 import torch
 import os
@@ -13,22 +14,24 @@ BATCH_SIZE = 100
 LR = 0.01
 
 transform_train = transforms.Compose([
-    transforms.RandomCrop(32, padding=4),  #
-    transforms.RandomHorizontalFlip(),  #一半的概率翻转
-    transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)), #
-])
+                                 transforms.Resize((32,32)),
+                                 transforms.ToTensor(),
+                                 transforms.Normalize(mean=[0.485,0.456,0.406], #image-net的初始化，更好的性能
+                                                      std=[0.229,0.224,0.225])
+                             ])
 
 transform_test = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-])
+                                       transforms.Resize((32, 32)),
+                                       transforms.ToTensor(),
+                                       transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                                            std=[0.229, 0.224, 0.225])
+                                   ])
 
-train_set = datasets.CIFAR10(root="../web_course/cifar",train=True,download=False,transform=transform_train)
-test_set = datasets.CIFAR10(root="../web_course/cifar",train=False,download=False,transform=transform_test)
+train_set = datasets.CIFAR10(root="../web_course/cifar",train=True,download=True,transform=transform_train)
+test_set = datasets.CIFAR10(root="../web_course/cifar",train=False,download=True,transform=transform_test)
 
-train_loader = DataLoader(train_set,batch_size=BATCH_SIZE,shuffle=True,num_workers=4)#num_worker吃CPU，加快速度，不改变效果
-test_loader = DataLoader(test_set,batch_size=BATCH_SIZE,shuffle=False,num_workers=4)
+train_loader = DataLoader(train_set,batch_size=BATCH_SIZE,shuffle=True,num_workers=2)#num_worker吃CPU，加快速度，不改变效果
+test_loader = DataLoader(test_set,batch_size=BATCH_SIZE,shuffle=False,num_workers=2)
 
 model = ResNet18().to(DEVICE)
 criterion = nn.CrossEntropyLoss().to(DEVICE)
