@@ -1,4 +1,4 @@
-#p44
+#p44 一开始就stride=3使得细节丢失太多，后续无法提高精确度
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -74,9 +74,7 @@ class ResNet18(nn.Module):
         x = self.blk8(x)
                 # print("after conv:",x.shape)
         # [b,512,h,w] -> [b,512,1,1]
-        # x = F.adaptive_avg_pool2d(x, (1, 1))
-        x = F.avg_pool2d(x, 4)
-
+        x = F.adaptive_avg_pool2d(x, (1, 1))
         # x = F.avg_pool2d(x, 4)
 
                 # print("after pool:", x.shape)
@@ -91,6 +89,7 @@ def main():
     x = torch.randn(2,3,112,112)
     model = ResNet18()
     out = model(x)
+    print(out.shape)
 if __name__ == '__main__':
     main()
 
